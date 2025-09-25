@@ -1,0 +1,49 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pdb
+*.egg-info/
+
+# Virtual environment
+.market/
+market/
+env/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Logs & temp
+*.log
+*.out
+*.tmp
+
+# Jupyter notebooks
+.ipynb_checkpoints/
+
+# Build / dist
+build/
+dist/
+*.egg
+.eggs/
+
+# pytest cache
+.pytest_cache/
+
+# Coverage reports
+htmlcov/
+.coverage
+coverage.xml
+
+# mypy & type checker
+.mypy_cache/
+.pyre/
+.pytype/
