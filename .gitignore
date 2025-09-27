@@ -7,9 +7,12 @@ __pycache__/
 *.egg-info/
 
 # Virtual environment
-.market/
+venv/
+.venv/
 market/
-env/
+__pycache__/
+*.pyc
+.env
 
 # IDE / Editor
 .vscode/
@@ -47,3 +50,4 @@ coverage.xml
 .mypy_cache/
 .pyre/
 .pytype/
+
