@@ -1,5 +1,5 @@
 import websockets, json
-from app.domain.qutoes.candles.tick_to_minute import update_candle
+from app.domain.quotes.candles.tick_to_minute import update_candle
 
 async def subscribe(symbol, approval_key, on_candle):
     async with websockets.connect("ws://ops.koreainvestment.com:31000") as ws:
