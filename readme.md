@@ -8,6 +8,9 @@
 ### 1-1. 가상환경 생성
 ```bash
 .\venv\Scripts\Activate
+
+Mac
+python -m venv venv
 ```
 venv 폴더가 생성됩니다. (깃허브에는 업로드하지 않습니다)
 

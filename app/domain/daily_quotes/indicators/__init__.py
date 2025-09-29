@@ -1,0 +1,2 @@
+# Daily Quotes Indicators Module
+
