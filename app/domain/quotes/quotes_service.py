@@ -7,6 +7,7 @@ from app.domain.quotes.indicators.moving_average import compute_ema, compute_sma
 from app.domain.quotes.indicators.stochastic import compute_stochastic
 from app.domain.quotes.indicators.atr import compute_atr
 from app.domain.quotes.indicators.volume import compute_rvol
+from app.config.redis_client import redis_client
 
 candles = []
 ws_task = None
@@ -14,8 +15,12 @@ ws_task = None
 async def start_quotes():
     """웹소켓 구독 시작"""
     global ws_task
-    approval_key = "APPROVAL_KEY 키를 db나 redis에 올린다."
-    symbol = os.getenv("SYMBOL", "005930")
+    
+    approval_key = redis_client.get("hanto:approval_key")
+    if not approval_key:
+        raise RuntimeError("approval_key가 Redis에 없습니다")
+    
+    symbol = "068270"
     ws_task = asyncio.create_task(subscribe(symbol, approval_key, on_candle))
 
 async def stop_quotes():
