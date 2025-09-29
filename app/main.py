@@ -25,19 +25,19 @@ async def lifespan(app: FastAPI):
         await stop_quotes()
 
 
-# @asynccontextmanager
-# async def lifespan(app: FastAPI):
-#     app.state.mock_task = asyncio.create_task(
-#         mock_subscribe("005930", "dummy-key", on_candle, interval=0.05)
-#     )
-#     try:
-#         yield
-#     finally:
-#         app.state.mock_task.cancel()
-#         try:
-#             await app.state.mock_task
-#         except asyncio.CancelledError:
-#             pass
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    app.state.mock_task = asyncio.create_task(
+        mock_subscribe("005930", "dummy-key", on_candle, interval=0.05)
+    )
+    try:
+        yield
+    finally:
+        app.state.mock_task.cancel()
+        try:
+            await app.state.mock_task
+        except asyncio.CancelledError:
+            pass
 
 
 

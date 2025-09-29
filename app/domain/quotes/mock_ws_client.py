@@ -1,4 +1,3 @@
-# app/domain/quotes/mock_ws_client.py
 import asyncio, random
 from datetime import datetime, timedelta
 from app.domain.quotes.candles.tick_to_minute import update_candle
@@ -43,5 +42,5 @@ async def mock_subscribe(symbol, approval_key, on_candle, interval=0.05):
         if closed_candle:
             await on_candle(closed_candle)
 
-        await asyncio.sleep(interval)  # 실시간처럼 간격 유지
+        await asyncio.sleep(interval)
         i += 1

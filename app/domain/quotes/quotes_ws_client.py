@@ -21,12 +21,10 @@ async def subscribe(symbol, approval_key, on_candle):
 
         while True:
             data = await ws.recv()
-            print("[RAW TICK]", data)
 
             if data.startswith("{"):
                 try:
                     msg = json.loads(data)
-                    print("[SYSTEM MSG]", msg)
                 except Exception as e:
                     print("[SYSTEM MSG] (invalid json)", e, data)
                 continue
@@ -38,8 +36,6 @@ async def subscribe(symbol, approval_key, on_candle):
                 tick_time = fields[1]
                 price = int(fields[2])
                 volume = int(fields[12])
-
-                print(f"[TICK PARSED] time={tick_time}, price={price}, volume={volume}")
 
                 closed_candle = update_candle(price, volume, tick_time)
                 if closed_candle:
