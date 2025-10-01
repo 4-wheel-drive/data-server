@@ -1,5 +1,5 @@
 from apscheduler.schedulers.background import BackgroundScheduler
-from app.domain.daily_quotes.daily_quotes_service import DailyQuotesService
+from app.domain.daily_quotes.daily_quotes_service import get_daily_quotes, calculate_technical_indicators, get_access_token
 from datetime import datetime, timedelta
 import os
 import time
@@ -73,10 +73,7 @@ def collect_daily_quotes():
         print("   watchlist.txt 파일에 유효한 종목코드를 추가하세요.")
         return
     
-    service = DailyQuotesService()
-    
-    # 토큰을 먼저 한 번만 발급받기
-    token = service.get_access_token()
+    token = get_access_token()
     if not token:
         print("❌ Access Token 발급 실패로 인해 데이터 수집을 중단합니다.")
         return
@@ -99,14 +96,14 @@ def collect_daily_quotes():
             time.sleep(3)
             
             # 최근 30일 데이터 조회
-            data = service.get_daily_quotes(symbol, symbol_name)
+            data = get_daily_quotes(symbol, symbol_name)
             
             if data and data.get('data'):
                 success_count += 1
                 print(f"✅ {symbol} ({symbol_name}): {data.get('count', 0)}일 데이터 수집 완료")
                 
                 # 보조지표 계산
-                indicators = service.calculate_technical_indicators(data['data'])
+                indicators = calculate_technical_indicators(data['data'])
                 
                 if indicators:
                     print(f"📊 {symbol} 보조지표:")

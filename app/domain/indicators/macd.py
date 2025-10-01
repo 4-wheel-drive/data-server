@@ -14,4 +14,3 @@ def compute_macd(prices, short=12, long=26, signal=9):
         'signal': macd_signal.iloc[-1] if not macd_signal.empty else None,
         'histogram': macd_hist.iloc[-1] if not macd_hist.empty else None
     }
-

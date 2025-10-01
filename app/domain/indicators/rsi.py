@@ -11,4 +11,3 @@ def compute_rsi(prices, period=14):
     rs = roll_up / roll_down
     rsi = 100 - (100 / (1 + rs))
     return rsi.iloc[-1] if not rsi.empty else None
-
