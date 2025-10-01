@@ -1,13 +1,13 @@
 import os, asyncio
 import numpy as np
-from app.domain.quotes.quotes_ws_client import subscribe
-from app.domain.quotes.indicators.rsi import compute_rsi
-from app.domain.quotes.indicators.macd import compute_macd
-from app.domain.quotes.indicators.bollinger import compute_bollinger
-from app.domain.quotes.indicators.moving_average import compute_ema, compute_sma
-from app.domain.quotes.indicators.stochastic import compute_stochastic
-from app.domain.quotes.indicators.atr import compute_atr
-from app.domain.quotes.indicators.volume import compute_rvol
+from app.domain.minute_quotes.quotes_ws_client import subscribe
+from app.domain.indicators.minute_rsi import compute_rsi
+from app.domain.indicators.minute_macd import compute_macd
+from app.domain.indicators.minute_bollinger import compute_bollinger
+from app.domain.indicators.minute_moving_average import compute_ema, compute_sma
+from app.domain.indicators.stochastic import compute_stochastic
+from app.domain.indicators.atr import compute_atr
+from app.domain.indicators.volume import compute_rvol
 from app.config.redis_client import redis_client
 from app.config.kafka_producer import send_candle
 
