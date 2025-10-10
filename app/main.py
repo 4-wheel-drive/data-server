@@ -40,3 +40,9 @@ async def lifespan(app: FastAPI):
 """
 
 app = FastAPI(title="market module", lifespan=lifespan)
+
+if __name__ == "__main__":
+    import uvicorn
+    print("🚀 Starting FastAPI server with schedulers...")
+    uvicorn.run("main:app", host="0.0.0.0", port=8000)
+
