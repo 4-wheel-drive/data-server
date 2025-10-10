@@ -8,6 +8,7 @@ from app.domain.indicators.minute_moving_average import compute_ema, compute_sma
 from app.domain.indicators.stochastic import compute_stochastic
 from app.domain.indicators.atr import compute_atr
 from app.domain.indicators.rvol import compute_all_timeframe_rvol
+from app.domain.indicators.vwap import compute_all_timeframe_vwap  # ✅ 추가
 from app.config.redis_client import redis_client
 from app.config.kafka_producer import send_candle
 
@@ -55,8 +56,11 @@ async def on_candle(candle):
     volumes = [c["volume"] for c in candles]
 
     indicators = {}
+    # ---------------- RSI ----------------
     if len(closes) >= 7:
         indicators["rsi7"] = to_native(compute_rsi(closes, 7).iloc[-1])
+
+    # ---------------- MACD ----------------
     if len(closes) >= 26:
         macd, sig, hist = compute_macd(closes)
         indicators["macd"] = {
@@ -64,17 +68,18 @@ async def on_candle(candle):
             "signal": to_native(sig.iloc[-1]),
             "hist": to_native(hist.iloc[-1]),
         }
+
+    # ---------------- Bollinger Bands + MA ----------------
     if len(closes) >= 20:
-        ma, upper, lower = compute_all_timeframe_bollinger(closes, 20, 2)
-        indicators["bollinger"] = {
-            "ma": to_native(ma.iloc[-1]),
-            "upper": to_native(upper.iloc[-1]),
-            "lower": to_native(lower.iloc[-1]),
-        }
+        bb_values = compute_all_timeframe_bollinger(closes)
+        indicators.update({k: to_native(v) for k, v in bb_values.items()})
+
         indicators["sma20"] = to_native(compute_sma(closes, 20).iloc[-1])
         indicators["ema8"] = to_native(compute_ema(closes, 8).iloc[-1])
         indicators["ema21"] = to_native(compute_ema(closes, 21).iloc[-1])
         indicators["ema50"] = to_native(compute_ema(closes, 50).iloc[-1])
+
+    # ---------------- Stochastic + ATR ----------------
     if len(closes) >= 14:
         stoch_k, stoch_d = compute_stochastic(highs, lows, closes)
         if stoch_k is not None and stoch_d is not None:
@@ -85,11 +90,19 @@ async def on_candle(candle):
         atr = compute_atr(highs, lows, closes)
         indicators["atr14"] = to_native(atr.iloc[-1])
 
+    # ---------------- RVOL ----------------
     if len(volumes) >= 20:
         rvol_values = compute_all_timeframe_rvol(volumes, 20)
         for key, value in rvol_values.items():
             indicators[key] = to_native(value)
 
+    # ---------------- VWAP (NEW) ----------------
+    if len(volumes) >= 5:  # 최소 5개 이상 봉 필요
+        vwap_values = compute_all_timeframe_vwap(closes, volumes)
+        for key, value in vwap_values.items():
+            indicators[key] = to_native(value)
+
+    # ---------------- Log & Kafka ----------------
     print(f"[Candle Closed] {candle}")
     print(f"[Indicators] {indicators}")
     print("-" * 60)
