@@ -6,8 +6,6 @@ conf = {
     "auto.offset.reset": "earliest",
 }
 
-consumer = Consumer(conf)
-
 topics = [
     "quotes.candles.1m",
     "quotes.candles.5m",
@@ -16,8 +14,9 @@ topics = [
     "quotes.candles.4h",
     "quotes.candles.1d",
 ]
-consumer.subscribe(topics)
 
+consumer = Consumer(conf)
+consumer.subscribe(topics)
 print(f"📥 Subscribed to topics: {topics}")
 
 try:
@@ -31,10 +30,7 @@ try:
             else:
                 raise KafkaException(msg.error())
 
-        topic = msg.topic()
-        value = msg.value().decode("utf-8")
-
-        print(f"[{topic}] ✅ {value}")
+        print(f"[{msg.topic()}] ✅ {msg.value().decode('utf-8')}")
 
 except KeyboardInterrupt:
     pass

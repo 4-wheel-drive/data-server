@@ -2,40 +2,42 @@ import websockets
 import json
 from app.domain.minute_quotes.candles.tick_to_minute import update_candle
 
+
 async def subscribe(symbol, approval_key, on_candle):
+    """한투 WebSocket 실시간 체결 데이터 구독"""
     async with websockets.connect("ws://ops.koreainvestment.com:31000") as ws:
         sub_msg = {
             "header": {
                 "approval_key": approval_key,
                 "custtype": "P",
-                "tr_type": "1"
+                "tr_type": "1",
+                "content-type": "utf-8",
             },
-            "body": {
-                "input": {
-                    "tr_id": "H0STCNT0",
-                    "tr_key": symbol
-                }
-            }
+            "body": {"input": {"tr_id": "H0STCNT0", "tr_key": symbol}},
         }
+
         await ws.send(json.dumps(sub_msg))
 
         while True:
             data = await ws.recv()
 
+            # JSON 메시지 (시스템 메시지 or 에러 응답)
             if data.startswith("{"):
                 try:
                     msg = json.loads(data)
+                    print(msg)
                 except Exception as e:
                     print("[SYSTEM MSG] (invalid json)", e, data)
                 continue
 
+            # 실시간 체결 데이터 처리
             try:
                 _, _, _, payload = data.split("|", 3)
                 fields = payload.split("^")
 
-                tick_time = fields[1]
-                price = int(fields[2])
-                volume = int(fields[12])
+                tick_time = fields[1]  # 체결 시간
+                price = int(fields[2])  # 체결가
+                volume = int(fields[12])  # 거래량
 
                 closed_candle = update_candle(price, volume, tick_time)
                 if closed_candle:
