@@ -3,11 +3,11 @@ import numpy as np
 from app.domain.minute_quotes.quotes_ws_client import subscribe
 from app.domain.indicators.minute_rsi import compute_rsi
 from app.domain.indicators.minute_macd import compute_macd
-from app.domain.indicators.minute_bollinger import compute_bollinger
+from app.domain.indicators.bollinger import compute_all_timeframe_bollinger
 from app.domain.indicators.minute_moving_average import compute_ema, compute_sma
 from app.domain.indicators.stochastic import compute_stochastic
 from app.domain.indicators.atr import compute_atr
-from app.domain.indicators.volume import compute_all_timeframe_rvol
+from app.domain.indicators.rvol import compute_all_timeframe_rvol
 from app.config.redis_client import redis_client
 from app.config.kafka_producer import send_candle
 
@@ -27,7 +27,7 @@ async def start_quotes():
     """웹소켓 구독 시작"""
     global ws_task
 
-    approval_key = redis_client.get("hanto:approval_key")
+    approval_key = redis_client.get("kis:admin:approval-key")
     if not approval_key:
         raise RuntimeError("approval_key가 Redis에 없습니다")
 
@@ -65,7 +65,7 @@ async def on_candle(candle):
             "hist": to_native(hist.iloc[-1]),
         }
     if len(closes) >= 20:
-        ma, upper, lower = compute_bollinger(closes, 20, 2)
+        ma, upper, lower = compute_all_timeframe_bollinger(closes, 20, 2)
         indicators["bollinger"] = {
             "ma": to_native(ma.iloc[-1]),
             "upper": to_native(upper.iloc[-1]),
