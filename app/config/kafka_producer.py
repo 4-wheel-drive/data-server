@@ -3,7 +3,7 @@ import json, socket, os
 
 # Kafka 설정
 conf = {
-    "bootstrap.servers": "localhost:19092",
+    "bootstrap.servers": "my-cluster-kafka-bootstrap.kafka:9092",
     "client.id": socket.gethostname()
 }
 

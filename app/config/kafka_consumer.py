@@ -1,7 +1,7 @@
 from confluent_kafka import Consumer, KafkaException, KafkaError
 
 conf = {
-    "bootstrap.servers": "localhost:19092",   # Kafka 브로커 주소
+    "bootstrap.servers": "my-cluster-kafka-bootstrap.kafka:9092",   # Kafka 브로커 주소
     "group.id": "test-consumer-group",        # 컨슈머 그룹 ID (아무거나 지정 가능)
     "auto.offset.reset": "earliest"           # 처음부터 읽기
 }
