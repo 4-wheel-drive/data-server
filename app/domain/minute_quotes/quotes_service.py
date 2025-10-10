@@ -7,7 +7,7 @@ from app.domain.indicators.minute_bollinger import compute_bollinger
 from app.domain.indicators.minute_moving_average import compute_ema, compute_sma
 from app.domain.indicators.stochastic import compute_stochastic
 from app.domain.indicators.atr import compute_atr
-from app.domain.indicators.volume import compute_rvol
+from app.domain.indicators.volume import compute_all_timeframe_rvol
 from app.config.redis_client import redis_client
 from app.config.kafka_producer import send_candle
 
@@ -15,22 +15,25 @@ from app.config.kafka_producer import send_candle
 candles = []
 ws_task = None
 
+
 def to_native(val):
     """numpy 타입 → 파이썬 기본 타입 변환"""
     if isinstance(val, (np.generic,)):
         return val.item()
     return val
 
+
 async def start_quotes():
     """웹소켓 구독 시작"""
     global ws_task
-    
+
     approval_key = redis_client.get("hanto:approval_key")
     if not approval_key:
         raise RuntimeError("approval_key가 Redis에 없습니다")
-    
+
     symbol = "068270"
     ws_task = asyncio.create_task(subscribe(symbol, approval_key, on_candle))
+
 
 async def stop_quotes():
     """웹소켓 구독 종료"""
@@ -41,6 +44,7 @@ async def stop_quotes():
             await ws_task
         except asyncio.CancelledError:
             pass
+
 
 async def on_candle(candle):
     """1분봉 확정 시 호출"""
@@ -58,14 +62,14 @@ async def on_candle(candle):
         indicators["macd"] = {
             "line": to_native(macd.iloc[-1]),
             "signal": to_native(sig.iloc[-1]),
-            "hist": to_native(hist.iloc[-1])
+            "hist": to_native(hist.iloc[-1]),
         }
     if len(closes) >= 20:
         ma, upper, lower = compute_bollinger(closes, 20, 2)
         indicators["bollinger"] = {
             "ma": to_native(ma.iloc[-1]),
             "upper": to_native(upper.iloc[-1]),
-            "lower": to_native(lower.iloc[-1])
+            "lower": to_native(lower.iloc[-1]),
         }
         indicators["sma20"] = to_native(compute_sma(closes, 20).iloc[-1])
         indicators["ema8"] = to_native(compute_ema(closes, 8).iloc[-1])
@@ -76,15 +80,18 @@ async def on_candle(candle):
         if stoch_k is not None and stoch_d is not None:
             indicators["stochastic"] = {
                 "k": to_native(stoch_k.iloc[-1]),
-                "d": to_native(stoch_d.iloc[-1])
+                "d": to_native(stoch_d.iloc[-1]),
             }
         atr = compute_atr(highs, lows, closes)
         indicators["atr14"] = to_native(atr.iloc[-1])
+
     if len(volumes) >= 20:
-        indicators["rvol"] = to_native(compute_rvol(volumes, 20).iloc[-1])
+        rvol_values = compute_all_timeframe_rvol(volumes, 20)
+        for key, value in rvol_values.items():
+            indicators[key] = to_native(value)
 
     print(f"[Candle Closed] {candle}")
     print(f"[Indicators] {indicators}")
     print("-" * 60)
-    
+
     send_candle(candle, indicators)
