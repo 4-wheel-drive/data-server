@@ -34,3 +34,18 @@ jobs:
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+      - name: Update deployment.yaml in infra repo
+        env:
+          ECR_REGISTRY: 618221165332.dkr.ecr.ap-northeast-2.amazonaws.com
+          ECR_REPOSITORY: data-server
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          git clone https://github.com/4-wheel-drive/data-server-infra.git
+          cd data-server-infra/manifests
+          sed -i "s#image: .*#image: ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}#" deployment.yaml
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add deployment.yaml
+          git commit -m "chore: update image tag to ${IMAGE_TAG}"
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/4-wheel-drive/data-server-infra.git
