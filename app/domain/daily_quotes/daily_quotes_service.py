@@ -16,11 +16,14 @@ load_dotenv()
 
 APP_KEY = os.getenv("APP_KEY")
 APP_SECRET = os.getenv("APP_SECRET")
-KIS_REST_API_URL = os.getenv("KIS_REST_API_URL", "https://openapivts.koreainvestment.com:29443")
+KIS_REST_API_URL = os.getenv(
+    "KIS_REST_API_URL", "https://openapivts.koreainvestment.com:29443"
+)
 
 
-def get_daily_quotes(symbol: str, symbol_name: str = None,
-                     start_date: str = None, end_date: str = None):
+def get_daily_quotes(
+    symbol: str, symbol_name: str = None, start_date: str = None, end_date: str = None
+):
     """일별 시세 조회"""
     if not end_date:
         end_date = datetime.now().strftime("%Y%m%d")
@@ -39,7 +42,7 @@ def get_daily_quotes(symbol: str, symbol_name: str = None,
         "authorization": f"Bearer {token}",
         "appkey": APP_KEY,
         "appsecret": APP_SECRET,
-        "tr_id": "FHKST01010400"
+        "tr_id": "FHKST01010400",
     }
 
     params = {
@@ -48,7 +51,7 @@ def get_daily_quotes(symbol: str, symbol_name: str = None,
         "fid_input_date_1": start_date,
         "fid_input_date_2": end_date,
         "fid_period_div_code": "D",
-        "fid_org_adj_prc": "1"
+        "fid_org_adj_prc": "1",
     }
 
     try:
@@ -68,7 +71,7 @@ def get_daily_quotes(symbol: str, symbol_name: str = None,
 def get_access_token() -> str | None:
     """Redis에서 Access Token 조회"""
     try:
-        token = redis_client.get("hanto:access_token")
+        token = redis_client.get("kis:user:1:access-token")
         if token:
             return token.decode("utf-8") if isinstance(token, bytes) else token
         else:
@@ -87,23 +90,23 @@ def calculate_technical_indicators(quotes_data):
 
     try:
         df = pd.DataFrame(quotes_data)
-        df['date'] = pd.to_datetime(df['date'])
-        df = df.sort_values('date').reset_index(drop=True)
+        df["date"] = pd.to_datetime(df["date"])
+        df = df.sort_values("date").reset_index(drop=True)
 
         indicators = {}
-        closes = df['close'].tolist()
+        closes = df["close"].tolist()
 
         # RSI
         if len(df) >= 14:
-            indicators['rsi'] = compute_rsi(closes)
+            indicators["rsi"] = compute_rsi(closes)
 
         # MACD
         if len(df) >= 26:
-            indicators['macd'] = compute_macd(closes)
+            indicators["macd"] = compute_macd(closes)
 
         # Bollinger Bands
         if len(df) >= 20:
-            indicators['bollinger_bands'] = compute_bollinger_bands(closes)
+            indicators["bollinger_bands"] = compute_bollinger_bands(closes)
 
         # SMA
         sma_dict = compute_sma(closes, windows=[5, 10, 20, 60])

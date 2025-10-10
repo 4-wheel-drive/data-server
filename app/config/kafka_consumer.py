@@ -1,19 +1,27 @@
 from confluent_kafka import Consumer, KafkaException, KafkaError
 
 conf = {
-    "bootstrap.servers": "localhost:19092",   # Kafka 브로커 주소
-    "group.id": "test-consumer-group",        # 컨슈머 그룹 ID (아무거나 지정 가능)
-    "auto.offset.reset": "earliest"           # 처음부터 읽기
+    "bootstrap.servers": "localhost:19092",
+    "group.id": "multi-timeframe-consumer",
+    "auto.offset.reset": "earliest",
 }
 
-consumer = Consumer(conf)
-consumer.subscribe(["quotes.candles.1m"])     # 구독할 토픽
+topics = [
+    "quotes.candles.1m",
+    "quotes.candles.5m",
+    "quotes.candles.15m",
+    "quotes.candles.1h",
+    "quotes.candles.4h",
+    "quotes.candles.1d",
+]
 
-print("📥 Kafka consumer started. Waiting for messages...")
+consumer = Consumer(conf)
+consumer.subscribe(topics)
+print(f"📥 Subscribed to topics: {topics}")
 
 try:
     while True:
-        msg = consumer.poll(1.0)  # 1초 대기
+        msg = consumer.poll(1.0)
         if msg is None:
             continue
         if msg.error():
@@ -21,7 +29,9 @@ try:
                 continue
             else:
                 raise KafkaException(msg.error())
-        print(f"✅ Received message: {msg.value().decode('utf-8')}")
+
+        print(f"[{msg.topic()}] ✅ {msg.value().decode('utf-8')}")
+
 except KeyboardInterrupt:
     pass
 finally:
