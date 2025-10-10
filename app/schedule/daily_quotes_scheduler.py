@@ -14,7 +14,7 @@ def get_watchlist_symbols():
         # 프로젝트 루트 디렉토리의 watchlist.txt 파일을 찾기
         import os
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        project_root = os.path.dirname(current_dir)
+        project_root = os.path.dirname(os.path.dirname(current_dir))
         watchlist_path = os.path.join(project_root, "watchlist.txt")
         
         with open(watchlist_path, "r", encoding="utf-8") as f:
