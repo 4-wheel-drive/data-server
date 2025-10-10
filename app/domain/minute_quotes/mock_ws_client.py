@@ -1,6 +1,6 @@
 import asyncio, random
 from datetime import datetime, timedelta
-from app.domain.minute_quotes.candles.tick_to_minute import update_candle
+from domain.minute_quotes.candles.tick_to_minute import update_candle
 
 async def mock_subscribe(symbol, approval_key, on_candle, interval=0.05):
     """

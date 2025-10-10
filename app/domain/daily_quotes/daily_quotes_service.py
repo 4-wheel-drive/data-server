@@ -5,12 +5,12 @@ import time
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
-from app.domain.indicators.rsi import compute_rsi
-from app.domain.indicators.macd import compute_macd
-from app.domain.indicators.bollinger import compute_bollinger_bands
-from app.domain.indicators.moving_average import compute_sma, compute_ema
-from app.domain.daily_quotes.candles.data_processor import process_daily_data
-from app.config.redis_client import redis_client  # ✅ Redis client import
+from domain.indicators.rsi import compute_rsi
+from domain.indicators.macd import compute_macd
+from domain.indicators.bollinger import compute_bollinger_bands
+from domain.indicators.moving_average import compute_sma, compute_ema
+from domain.daily_quotes.candles.data_processor import process_daily_data
+from config.redis_client import redis_client  # ✅ Redis client import
 
 load_dotenv()
 

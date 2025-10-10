@@ -1,5 +1,5 @@
 from apscheduler.schedulers.background import BackgroundScheduler
-from app.domain.daily_quotes.daily_quotes_service import get_daily_quotes, calculate_technical_indicators, get_access_token
+from domain.daily_quotes.daily_quotes_service import get_daily_quotes, calculate_technical_indicators, get_access_token
 from datetime import datetime, timedelta
 import os
 import time

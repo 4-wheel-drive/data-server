@@ -2,7 +2,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import httpx
 import os
 from dotenv import load_dotenv
-from app.config.redis_client import redis_client
+from config.redis_client import redis_client
 
 load_dotenv()
 

@@ -1,15 +1,15 @@
 import os, asyncio
 import numpy as np
-from app.domain.minute_quotes.quotes_ws_client import subscribe
-from app.domain.indicators.minute_rsi import compute_rsi
-from app.domain.indicators.minute_macd import compute_macd
-from app.domain.indicators.minute_bollinger import compute_bollinger
-from app.domain.indicators.minute_moving_average import compute_ema, compute_sma
-from app.domain.indicators.stochastic import compute_stochastic
-from app.domain.indicators.atr import compute_atr
-from app.domain.indicators.volume import compute_rvol
-from app.config.redis_client import redis_client
-from app.config.kafka_producer import send_candle
+from domain.minute_quotes.quotes_ws_client import subscribe
+from domain.indicators.minute_rsi import compute_rsi
+from domain.indicators.minute_macd import compute_macd
+from domain.indicators.minute_bollinger import compute_bollinger
+from domain.indicators.minute_moving_average import compute_ema, compute_sma
+from domain.indicators.stochastic import compute_stochastic
+from domain.indicators.atr import compute_atr
+from domain.indicators.volume import compute_rvol
+from config.redis_client import redis_client
+from config.kafka_producer import send_candle
 
 
 candles = []

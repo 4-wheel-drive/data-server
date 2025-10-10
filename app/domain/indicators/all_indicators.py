@@ -1,11 +1,11 @@
 import pandas as pd
-from app.domain.indicators.moving_average import compute_all_timeframe_ma
-from app.domain.indicators.rsi import compute_all_timeframe_rsi
-from app.domain.indicators.bollinger import compute_all_timeframe_bollinger
-from app.domain.indicators.macd import compute_all_timeframe_macd
-from app.domain.indicators.hold import compute_all_timeframe_hold
-from app.domain.indicators.candle_pattern import compute_all_timeframe_candle_patterns
-from app.domain.indicators.profit_loss import compute_all_timeframe_profit_loss
+from domain.indicators.moving_average import compute_all_timeframe_ma
+from domain.indicators.rsi import compute_all_timeframe_rsi
+from domain.indicators.bollinger import compute_all_timeframe_bollinger
+from domain.indicators.macd import compute_all_timeframe_macd
+from domain.indicators.hold import compute_all_timeframe_hold
+from domain.indicators.candle_pattern import compute_all_timeframe_candle_patterns
+from domain.indicators.profit_loss import compute_all_timeframe_profit_loss
 
 def compute_all_indicators(prices, highs=None, lows=None, volumes=None, entry_price=None):
     results = {}
