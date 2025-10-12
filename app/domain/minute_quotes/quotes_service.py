@@ -1,6 +1,6 @@
 import os, asyncio
 import numpy as np
-from app.domain.minute_quotes.quotes_ws_client import subscribe
+from app.domain.minute_quotes.subscribe import subscribe
 from app.config.redis_client import redis_client
 
 
