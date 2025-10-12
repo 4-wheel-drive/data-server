@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 
 def compute_sma(prices, windows=[9, 20, 50, 60, 200], prefix=""):
@@ -56,4 +57,24 @@ def compute_all_timeframe_ma(prices):
         results.update(compute_ema(prices, [20, 50, 60, 200], "4h_"))
 
     # 일봉은 다른 프로세스에서 관리하므로 제외
+    return results
+
+
+def compute_mono_timeframe_ma(prices, timeframe: str):
+    """단일 타임프레임 기준 이평 계산"""
+    timeframe_windows = {
+        "1m": [9, 20, 50],
+        "5m": [9, 20, 50, 60],
+        "15m": [20, 50, 60, 200],
+        "1h": [20, 50, 60, 200],
+        "4h": [20, 50, 60, 200],
+    }
+
+    if timeframe not in timeframe_windows:
+        raise ValueError(f"Unsupported timeframe: {timeframe}")
+
+    windows = timeframe_windows[timeframe]
+    results = {}
+    results.update(compute_sma(prices, windows))
+    results.update(compute_ema(prices, windows))
     return results

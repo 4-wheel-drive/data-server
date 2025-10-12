@@ -38,3 +38,18 @@ def compute_all_timeframe_bollinger(prices):
         results.update(compute_bollinger_bands(prices, 20, 2, f"{tf}_"))
 
     return results
+
+
+def compute_mono_timeframe_bollinger(prices, period=20, stddev=2):
+    if len(prices) < period:
+        return {}
+
+    s = pd.Series(prices)
+    mid = s.rolling(period).mean().iloc[-1]
+    std = s.rolling(period).std().iloc[-1]
+
+    return {
+        "bollinger.upper": float(mid + stddev * std),
+        "bollinger.middle": float(mid),
+        "bollinger.lower": float(mid - stddev * std),
+    }

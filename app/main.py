@@ -9,7 +9,6 @@ from app.domain.minute_quotes.quotes_service import start_quotes, stop_quotes
 #     start_daily_quotes_scheduler,
 #     shutdown_daily_quotes_scheduler,
 # )
-# from app.domain.minute_quotes.mock_ws_client import mock_subscribe
 
 
 @asynccontextmanager
@@ -28,22 +27,6 @@ async def lifespan(app: FastAPI):
         # shutdown_daily_quotes_scheduler()
         await stop_quotes()
 
-
-"""  
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    app.state.mock_task = asyncio.create_task(
-        mock_subscribe("005930", "dummy-key", on_candle, interval=0.05)
-    )
-    try:
-        yield
-    finally:
-        app.state.mock_task.cancel()
-        try:
-            await app.state.mock_task
-        except asyncio.CancelledError:
-            pass
-"""
 
 app = FastAPI(title="market module", lifespan=lifespan)
 # app = FastAPI(title="market module")
