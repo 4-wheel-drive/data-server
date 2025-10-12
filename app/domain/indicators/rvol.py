@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 
 def compute_rvol(volumes, period=20):
@@ -27,3 +28,14 @@ def compute_all_timeframe_rvol(volumes, period=20):
         results[f"{tf}rvol"] = rvol.iloc[-1]
 
     return results
+
+
+def compute_mono_timeframe_rvol(volumes, period=20):
+    if len(volumes) < period:
+        return {}
+
+    avg_vol = np.mean(volumes[-period:])
+    if avg_vol == 0:
+        return {"rvol20": 1.0}
+
+    return {"rvol20": float(round(volumes[-1] / avg_vol, 3))}

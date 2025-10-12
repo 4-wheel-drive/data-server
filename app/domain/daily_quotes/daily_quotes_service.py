@@ -10,7 +10,7 @@ from app.domain.indicators.macd import compute_macd
 from app.domain.indicators.bollinger import compute_bollinger_bands
 from app.domain.indicators.moving_average import compute_sma, compute_ema
 from app.domain.daily_quotes.candles.data_processor import process_daily_data
-from app.config.redis_client import redis_client  # ✅ Redis client import
+from app.config.redis_client import redis_client
 
 load_dotenv()
 

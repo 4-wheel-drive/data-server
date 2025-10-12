@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 
 def compute_vwap(prices, volumes):
@@ -35,3 +36,11 @@ def compute_all_timeframe_vwap(prices, volumes):
             results[f"{prefix}vwap"] = vwap
 
     return results
+
+
+def compute_mono_timeframe_vwap(closes, volumes):
+    """VWAP 계산"""
+    if np.sum(volumes) == 0:
+        return {}
+    closes, volumes = np.array(closes), np.array(volumes)
+    return {"vwap": float(np.sum(closes * volumes) / np.sum(volumes))}

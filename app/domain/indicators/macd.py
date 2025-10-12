@@ -39,3 +39,22 @@ def compute_all_timeframe_macd(prices):
             results.update(compute_macd(prices, short, long, signal, tf))
 
     return results
+
+
+def compute_mono_timeframe_macd(prices, fast=12, slow=26, signal=9):
+    """MACD 계산 (단일 타임프레임 기준)"""
+    if len(prices) < slow:
+        return {}
+
+    df = pd.Series(prices)
+    ema_fast = df.ewm(span=fast, adjust=False).mean()
+    ema_slow = df.ewm(span=slow, adjust=False).mean()
+    macd_line = ema_fast - ema_slow
+    signal_line = macd_line.ewm(span=signal, adjust=False).mean()
+    hist = macd_line - signal_line
+
+    return {
+        "macd.line": float(macd_line.iloc[-1]),
+        "macd.signal": float(signal_line.iloc[-1]),
+        "macd.hist": float(hist.iloc[-1]),
+    }

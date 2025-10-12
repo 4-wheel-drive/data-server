@@ -1,11 +1,11 @@
 import websockets
 import json
-from app.domain.minute_quotes.candles.tick_to_minute import update_candle
+from app.config.redis_client import redis_client
+from app.domain.minute_quotes.schemes.tick_response import ResponseBody
 
 
-async def subscribe(symbol, approval_key, on_candle):
-    """한투 WebSocket 실시간 체결 데이터 구독"""
-    async with websockets.connect("ws://ops.koreainvestment.com:31000") as ws:
+async def subscribe(symbol: str, approval_key: str):
+    async with websockets.connect("ws://localhost:31000") as ws:
         sub_msg = {
             "header": {
                 "approval_key": approval_key,
@@ -15,33 +15,39 @@ async def subscribe(symbol, approval_key, on_candle):
             },
             "body": {"input": {"tr_id": "H0STCNT0", "tr_key": symbol}},
         }
-
         await ws.send(json.dumps(sub_msg))
+        print(f"구독 요청 전송 완료: {symbol}")
 
         while True:
-            data = await ws.recv()
-
-            # JSON 메시지 (시스템 메시지 or 에러 응답)
-            if data.startswith("{"):
-                try:
-                    msg = json.loads(data)
-                    print(msg)
-                except Exception as e:
-                    print("[SYSTEM MSG] (invalid json)", e, data)
+            raw = await ws.recv()
+            if raw.startswith("{"):
                 continue
 
-            # 실시간 체결 데이터 처리
             try:
-                _, _, _, payload = data.split("|", 3)
+                _, _, _, payload = raw.split("|", 3)
                 fields = payload.split("^")
 
-                tick_time = fields[1]  # 체결 시간
-                price = int(fields[2])  # 체결가
-                volume = int(fields[12])  # 거래량
+                body = ResponseBody(*fields[: len(ResponseBody.__dataclass_fields__)])
 
-                closed_candle = update_candle(price, volume, tick_time)
-                if closed_candle:
-                    await on_candle(closed_candle)
+                key_raw = f"market:{symbol}:tick_raw"
+                redis_client.set(key_raw, json.dumps(body.__dict__))
+
+                key_summary = f"market:{symbol}:tick"
+                summary = {
+                    "symbol": symbol,
+                    "tick_time": body.STCK_CNTG_HOUR,
+                    "price": float(body.STCK_PRPR),
+                    "change_rate": float(body.PRDY_CTRT),
+                    "volume": int(body.CNTG_VOL),
+                    "cumulative_volume": int(body.ACML_VOL),
+                    "cumulative_value": int(body.ACML_TR_PBMN),
+                    "tick_strength": float(body.CTTR),
+                }
+                redis_client.set(key_summary, json.dumps(summary))
+
+                print(
+                    f"{symbol} {summary['tick_time']} | {summary['price']} | 강도={summary['tick_strength']}"
+                )
 
             except Exception as e:
-                print("[PARSE ERROR]", e, data)
+                print("[PARSE ERROR]", e, raw)

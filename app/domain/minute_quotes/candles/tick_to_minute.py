@@ -2,6 +2,7 @@ candles_1m = []
 current_candle = None
 prev_minute = None
 
+
 def update_candle(price: float, volume: int, tick_time: str):
     """
     틱 데이터를 받아 1분봉 확정 시 반환
@@ -19,7 +20,7 @@ def update_candle(price: float, volume: int, tick_time: str):
             "close": price,
             "volume": volume,
             "vwap_num": price * volume,
-            "vwap_den": volume
+            "vwap_den": volume,
         }
         return None
 
@@ -40,7 +41,7 @@ def update_candle(price: float, volume: int, tick_time: str):
             "close": price,
             "volume": volume,
             "vwap_num": price * volume,
-            "vwap_den": volume
+            "vwap_den": volume,
         }
         return closed
     else:
