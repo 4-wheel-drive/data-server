@@ -1,6 +1,7 @@
 import websockets
 import json
 from app.config.redis_client import redis_client
+from app.domain.minute_quotes.tick_to_candle import on_tick
 
 
 def safe_float(v, default=0.0):
@@ -62,6 +63,8 @@ async def subscribe(symbol: str, approval_key: str):
                 }
 
                 redis_client.set(f"market:{symbol}:tick", json.dumps(summary))
+
+                on_tick(symbol, price, volume, tick_time)
 
                 print(
                     f"{symbol} {tick_time} | "

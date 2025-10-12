@@ -12,8 +12,11 @@ SUPPORTED_TIMEFRAMES = ["1m", "5m", "15m", "1h", "4h"]
 
 
 def update_candle(symbol, timeframe, candles):
-    """새 봉 확정 시 (timeframe별) 전체 지표 계산"""
-    if timeframe not in SUPPORTED_TIMEFRAMES:
+    """새 봉 확정 시 (timeframe별) 전체 지표 계산 및 Redis 저장"""
+    if timeframe not in SUPPORTED_TIMEFRAMES or not candles:
+        return None
+
+    if not all("volume" in c and "close" in c for c in candles):
         return None
 
     closes = [c["close"] for c in candles]
@@ -31,10 +34,10 @@ def update_candle(symbol, timeframe, candles):
     }
 
     # ==========================
-    # 지표 계산 (모두 단일 타임프레임 버전)
+    # 지표 계산 (단일 타임프레임 버전)
     # ==========================
     data.update(compute_mono_timeframe_ma(closes, timeframe))  # SMA, EMA
-    data.update(compute_mono_timeframe_rsi(closes, timeframe))  # RSI 7, 14, 21
+    data.update(compute_mono_timeframe_rsi(closes, timeframe))  # RSI
     data.update(compute_mono_timeframe_macd(closes))  # MACD
     data.update(compute_mono_timeframe_bollinger(closes))  # Bollinger Bands
     data.update(compute_mono_timeframe_vwap(closes, volumes))  # VWAP
@@ -42,9 +45,9 @@ def update_candle(symbol, timeframe, candles):
     data.update(compute_cumulative_values(candles))  # 누적 거래량/대금
 
     # ==========================
-    # 캐시 업데이트 및 반환
+    # Redis 캐시 업데이트
     # ==========================
     key = f"market:{symbol}:{timeframe}"
-    redis_client.set(key, json.dumps(data))
+    redis_client.set(key, json.dumps(data, default=str))
 
     return {symbol: {timeframe: data}}
