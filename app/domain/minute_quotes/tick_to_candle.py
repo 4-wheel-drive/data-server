@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 from collections import defaultdict
 from app.domain.minute_quotes.candles.candle_engine import update_candle
-from app.domain.minute_quotes.update_tick import update_tick
 
 timeframes = {
     "1m": timedelta(minutes=1),
@@ -18,16 +17,9 @@ candles_buffer = defaultdict(lambda: defaultdict(list))
 def on_tick(symbol: str, price: float, volume: int, tick_time: str):
     """
     실시간 체결(Tick) 데이터 수신 시 처리
-    - tick 단위 데이터 update_tick()으로 실시간 지표 업데이트
     - timeframe별 봉 누적 버퍼 업데이트
     - 봉이 확정되면 update_candle() 호출
     """
-
-    try:
-        update_tick(symbol, price, volume, tick_time)
-    except Exception as e:
-        print(f"[WARN] update_tick 실패 ({symbol}) → {e}")
-
     try:
         now = datetime.strptime(tick_time, "%H%M%S")
 

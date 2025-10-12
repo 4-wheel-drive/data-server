@@ -1,7 +1,21 @@
 import websockets
 import json
 from app.config.redis_client import redis_client
-from app.domain.minute_quotes.schemes.tick_response import ResponseBody
+from app.domain.minute_quotes.tick_to_candle import on_tick
+
+
+def safe_float(v, default=0.0):
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return default
+
+
+def safe_int(v, default=0):
+    try:
+        return int(v)
+    except (TypeError, ValueError):
+        return default
 
 
 async def subscribe(symbol: str, approval_key: str):
@@ -15,11 +29,13 @@ async def subscribe(symbol: str, approval_key: str):
             },
             "body": {"input": {"tr_id": "H0STCNT0", "tr_key": symbol}},
         }
+
         await ws.send(json.dumps(sub_msg))
-        print(f"구독 요청 전송 완료: {symbol}")
+        print(f"✅ 구독 요청 전송 완료: {symbol}")
 
         while True:
             raw = await ws.recv()
+
             if raw.startswith("{"):
                 continue
 
@@ -27,26 +43,34 @@ async def subscribe(symbol: str, approval_key: str):
                 _, _, _, payload = raw.split("|", 3)
                 fields = payload.split("^")
 
-                body = ResponseBody(*fields[: len(ResponseBody.__dataclass_fields__)])
+                tick_time = fields[1]  # 체결시각 (HHMMSS)
+                price = safe_float(fields[2])  # 현재가
+                change_rate = safe_float(fields[5])  # 전일대비율
+                volume = safe_int(fields[12])  # 체결거래량
+                cumulative_volume = safe_int(fields[13])  # 누적거래량
+                cumulative_value = safe_int(fields[14])  # 누적거래대금
+                tick_strength = safe_float(fields[15])  # 체결강도
 
-                key_raw = f"market:{symbol}:tick_raw"
-                redis_client.set(key_raw, json.dumps(body.__dict__))
-
-                key_summary = f"market:{symbol}:tick"
                 summary = {
                     "symbol": symbol,
-                    "tick_time": body.STCK_CNTG_HOUR,
-                    "price": float(body.STCK_PRPR),
-                    "change_rate": float(body.PRDY_CTRT),
-                    "volume": int(body.CNTG_VOL),
-                    "cumulative_volume": int(body.ACML_VOL),
-                    "cumulative_value": int(body.ACML_TR_PBMN),
-                    "tick_strength": float(body.CTTR),
+                    "tick_time": tick_time,
+                    "price": price,
+                    "change_rate": change_rate,
+                    "volume": volume,
+                    "cumulative_volume": cumulative_volume,
+                    "cumulative_value": cumulative_value,
+                    "tick_strength": tick_strength,
                 }
-                redis_client.set(key_summary, json.dumps(summary))
+
+                redis_client.set(f"market:{symbol}:tick", json.dumps(summary))
+
+                on_tick(symbol, price, volume, tick_time)
 
                 print(
-                    f"{symbol} {summary['tick_time']} | {summary['price']} | 강도={summary['tick_strength']}"
+                    f"{symbol} {tick_time} | "
+                    f"현재가={price:,.0f}원 | "
+                    f"등락={change_rate:.2f}% | "
+                    f"체결강도={tick_strength:.2f}"
                 )
 
             except Exception as e:
