@@ -1,5 +1,5 @@
 import json
-from app.config.redis_client import redis_client
+from app.infra.redis_client import redis_client
 
 MAX_CANDLES = {
     "1m": 500,

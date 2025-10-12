@@ -1,7 +1,7 @@
 import websockets
 import json
 from datetime import datetime
-from app.config.redis_client import redis_client
+from app.infra.redis_client import redis_client
 from app.domain.minute_quotes.tick_to_candle import on_tick
 
 

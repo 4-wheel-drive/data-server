@@ -1,7 +1,7 @@
 import os, asyncio
 import numpy as np
 from app.domain.minute_quotes.subscribe import subscribe
-from app.config.redis_client import redis_client
+from app.infra.redis_client import redis_client
 
 
 candles = []

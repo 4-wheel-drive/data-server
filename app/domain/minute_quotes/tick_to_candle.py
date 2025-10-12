@@ -4,6 +4,9 @@ from app.domain.minute_quotes.candles.services.candle_storage import push_candle
 from app.domain.minute_quotes.candles.services.candle_aggregator import (
     aggregate_to_higher_timeframes,
 )
+from app.infra.kafka_producer import producer, delivery_report
+import json
+
 
 # 현재 진행 중인 1분봉 상태
 candle_buffer = {}
@@ -59,4 +62,14 @@ def on_tick(
         _, candle_minute = k
         candle = candle_buffer.pop(k)
         push_candle(symbol, "1m", candle)
+
+        topic = f"candles.{symbol}.1m"
+        producer.produce(
+            topic,
+            value=json.dumps(candle, ensure_ascii=False),
+            callback=delivery_report,
+        )
+        producer.poll(0)
+        print(f"[Kafka →] {topic}: {candle}")
+
         aggregate_to_higher_timeframes(symbol, candle)
