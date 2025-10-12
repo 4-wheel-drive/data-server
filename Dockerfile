@@ -9,7 +9,7 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # ===============================
-# Install dependencies
+# dependencies 설치
 # ===============================
 # 먼저 requirements.txt 복사 후 설치
 COPY requirements.txt .
