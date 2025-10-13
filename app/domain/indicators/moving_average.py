@@ -1,9 +1,7 @@
 import pandas as pd
-import numpy as np
+from app.domain.indicators.redis_helper import get_indicator_from_redis
 
-
-def compute_sma(prices, windows=[9, 20, 50, 60, 200], prefix=""):
-    """단순이동평균 (Simple Moving Average)"""
+def compute_sma(prices, windows=[5, 20, 60, 120], prefix=""):
     s = pd.Series(prices)
     sma_data = {}
     for window in windows:
@@ -12,9 +10,7 @@ def compute_sma(prices, windows=[9, 20, 50, 60, 200], prefix=""):
             sma_data[key] = s.rolling(window).mean().iloc[-1]
     return sma_data
 
-
-def compute_ema(prices, windows=[9, 20, 50, 60, 200], prefix=""):
-    """지수이동평균 (Exponential Moving Average)"""
+def compute_ema(prices, windows=[5, 20, 60, 120], prefix=""):
     s = pd.Series(prices)
     ema_data = {}
     for window in windows:
@@ -23,58 +19,30 @@ def compute_ema(prices, windows=[9, 20, 50, 60, 200], prefix=""):
             ema_data[key] = s.ewm(span=window, adjust=False).mean().iloc[-1]
     return ema_data
 
-
-def compute_all_timeframe_ma(prices):
-    """
-    타임프레임별 이동평균 계산
-    - 1m, 5m, 15m, 1h, 4h, 1d 타임프레임 기준
-    """
+def compute_all_timeframe_ma(prices, symbol=None):
     results = {}
-
-    if len(prices) >= 9:
-        # 1분봉
-        results.update(compute_sma(prices, [9, 20, 50], "1m_"))
-        results.update(compute_ema(prices, [9, 20, 50], "1m_"))
-
-    if len(prices) >= 20:
-        # 5분봉
-        results.update(compute_sma(prices, [9, 20, 50, 60], "5m_"))
-        results.update(compute_ema(prices, [9, 20, 50, 60], "5m_"))
-
-    if len(prices) >= 50:
-        # 15분봉
-        results.update(compute_sma(prices, [20, 50, 60, 200], "15m_"))
-        results.update(compute_ema(prices, [20, 50, 60, 200], "15m_"))
-
-    if len(prices) >= 60:
-        # 1시간봉
-        results.update(compute_sma(prices, [20, 50, 60, 200], "1h_"))
-        results.update(compute_ema(prices, [20, 50, 60, 200], "1h_"))
-
-    if len(prices) >= 200:
-        # 4시간봉
-        results.update(compute_sma(prices, [20, 50, 60, 200], "4h_"))
-        results.update(compute_ema(prices, [20, 50, 60, 200], "4h_"))
-
-    # 일봉은 다른 프로세스에서 관리하므로 제외
-    return results
-
-
-def compute_mono_timeframe_ma(prices, timeframe: str):
-    """단일 타임프레임 기준 이평 계산"""
-    timeframe_windows = {
-        "1m": [9, 20, 50],
-        "5m": [9, 20, 50, 60],
-        "15m": [20, 50, 60, 200],
-        "1h": [20, 50, 60, 200],
-        "4h": [20, 50, 60, 200],
-    }
-
-    if timeframe not in timeframe_windows:
-        raise ValueError(f"Unsupported timeframe: {timeframe}")
-
-    windows = timeframe_windows[timeframe]
-    results = {}
-    results.update(compute_sma(prices, windows))
-    results.update(compute_ema(prices, windows))
+    
+    all_windows = [5, 20, 60, 120]
+    timeframes = ["1m_", "5m_", "15m_", "1h_", "4h_", "1d_"]
+    
+    for timeframe in timeframes:
+        tf_key = timeframe.rstrip('_')
+        
+        for window in all_windows:
+            sma_key = f"{timeframe}sma_{window}"
+            ema_key = f"{timeframe}ema_{window}"
+            
+            if len(prices) >= window:
+                sma_result = compute_sma(prices, [window], timeframe)
+                ema_result = compute_ema(prices, [window], timeframe)
+                results.update(sma_result)
+                results.update(ema_result)
+            elif symbol:
+                sma_value = get_indicator_from_redis(symbol, tf_key, f"sma_{window}")
+                ema_value = get_indicator_from_redis(symbol, tf_key, f"ema_{window}")
+                if sma_value is not None:
+                    results[sma_key] = sma_value
+                if ema_value is not None:
+                    results[ema_key] = ema_value
+    
     return results

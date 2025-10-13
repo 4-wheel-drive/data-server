@@ -1,5 +1,5 @@
 import pandas as pd
-
+from app.domain.indicators.redis_helper import get_indicator_from_redis
 
 def compute_rsi(prices, period=14, prefix=""):
     s = pd.Series(prices)
@@ -14,20 +14,24 @@ def compute_rsi(prices, period=14, prefix=""):
     key = f"{prefix}rsi_{period}" if prefix else f"rsi_{period}"
     return {key: rsi.iloc[-1]} if not rsi.empty else {key: None}
 
-
-def compute_all_timeframe_rsi(prices):
-    """
-    타임프레임별 RSI 계산 (표준화 버전)
-    - 타임프레임: 1m, 5m, 15m, 1h, 4h
-    - 기간(period): 7, 14, 21
-    """
+def compute_all_timeframe_rsi(prices, symbol=None):
     results = {}
-    timeframes = ["1m", "5m", "15m", "1h", "4h"]
+    
+    timeframes = ["1m_", "5m_", "15m_", "1h_", "4h_", "1d_"]
+    periods = [7, 14, 21]
 
-    for tf in timeframes:
-        for period in [7, 14, 21]:
+    for timeframe in timeframes:
+        tf_key = timeframe.rstrip('_')
+        
+        for period in periods:
+            rsi_key = f"{timeframe}rsi_{period}"
+            
             if len(prices) >= period:
-                results.update(compute_rsi(prices, period, f"{tf}_"))
+                results.update(compute_rsi(prices, period, timeframe))
+            elif symbol:
+                rsi_value = get_indicator_from_redis(symbol, tf_key, f"rsi_{period}")
+                if rsi_value is not None:
+                    results[rsi_key] = rsi_value
 
     return results
 

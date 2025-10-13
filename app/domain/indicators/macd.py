@@ -1,8 +1,7 @@
 import pandas as pd
-
+from app.domain.indicators.redis_helper import get_indicator_from_redis
 
 def compute_macd(prices, short=12, long=26, signal=9, prefix=""):
-    """MACD 계산"""
     s = pd.Series(prices)
     ema_short = s.ewm(span=short, adjust=False).mean()
     ema_long = s.ewm(span=long, adjust=False).mean()
@@ -17,44 +16,26 @@ def compute_macd(prices, short=12, long=26, signal=9, prefix=""):
         f"{base_key}_histogram": macd_hist.iloc[-1] if not macd_hist.empty else None,
     }
 
-
-def compute_all_timeframe_macd(prices):
-    """모든 타임프레임별 MACD 계산"""
+def compute_all_timeframe_macd(prices, symbol=None):
     results = {}
-    if not prices or len(prices) < 10:
-        return results
-
-    # short, long, signal 파라미터는 각 시간대에 맞게 미세조정
-    timeframes = {
-        "1m_": (8, 17, 5),  # 초단타용
-        "5m_": (10, 21, 7),  # 단기 스캘핑용
-        "15m_": (12, 26, 9),  # 표준 MACD
-        "1h_": (15, 30, 12),  # 스윙 기준
-        "4h_": (20, 40, 15),  # 중기 추세
-        "1d_": (12, 26, 9),  # 일봉 기준
-    }
-
-    for tf, (short, long, signal) in timeframes.items():
-        if len(prices) >= long:  # 충분한 데이터가 있을 때만 계산
-            results.update(compute_macd(prices, short, long, signal, tf))
-
+    
+    timeframes = ["1m_", "5m_", "15m_", "1h_", "4h_", "1d_"]
+    
+    for timeframe in timeframes:
+        tf_key = timeframe.rstrip('_')
+        
+        if len(prices) >= 26:
+            results.update(compute_macd(prices, 12, 26, 9, timeframe))
+        elif symbol:
+            macd_line = get_indicator_from_redis(symbol, tf_key, "macd_line")
+            macd_signal = get_indicator_from_redis(symbol, tf_key, "macd_signal")
+            macd_histogram = get_indicator_from_redis(symbol, tf_key, "macd_histogram")
+            
+            if macd_line is not None:
+                results[f"{timeframe}macd_line"] = macd_line
+            if macd_signal is not None:
+                results[f"{timeframe}macd_signal"] = macd_signal
+            if macd_histogram is not None:
+                results[f"{timeframe}macd_histogram"] = macd_histogram
+    
     return results
-
-
-def compute_mono_timeframe_macd(prices, fast=12, slow=26, signal=9):
-    """MACD 계산 (단일 타임프레임 기준)"""
-    if len(prices) < slow:
-        return {}
-
-    df = pd.Series(prices)
-    ema_fast = df.ewm(span=fast, adjust=False).mean()
-    ema_slow = df.ewm(span=slow, adjust=False).mean()
-    macd_line = ema_fast - ema_slow
-    signal_line = macd_line.ewm(span=signal, adjust=False).mean()
-    hist = macd_line - signal_line
-
-    return {
-        "macd.line": float(macd_line.iloc[-1]),
-        "macd.signal": float(signal_line.iloc[-1]),
-        "macd.hist": float(hist.iloc[-1]),
-    }
