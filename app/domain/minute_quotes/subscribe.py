@@ -1,87 +1,85 @@
+import asyncio
 import websockets
 import json
-from datetime import datetime
 from app.infra.redis_client import redis_client
 from app.domain.minute_quotes.tick_to_candle import on_tick
 
-
-def safe_float(v, default=0.0):
-    try:
-        return float(v)
-    except (TypeError, ValueError):
-        return default
+WS_URL = "ws://ops.koreainvestment.com:21000"  # 실서버
 
 
-def safe_int(v, default=0):
-    try:
-        return int(v)
-    except (TypeError, ValueError):
-        return default
+async def start_multi_subscribe(symbols):
+    approval_key = redis_client.get("kis:admin:approval-key")
+    if not approval_key:
+        raise RuntimeError("approval_key가 Redis에 없습니다 (실서버 키 필요)")
 
+    print("실서버 WebSocket 실시간 구독 시작", flush=True)
 
-async def subscribe(symbol: str, approval_key: str):
-    async with websockets.connect("ws://localhost:31000") as ws:
-        sub_msg = {
-            "header": {
-                "approval_key": approval_key,
-                "custtype": "P",
-                "tr_type": "1",
-                "content-type": "utf-8",
-            },
-            "body": {"input": {"tr_id": "H0STCNT0", "tr_key": symbol}},
-        }
+    while True:
+        try:
+            async with websockets.connect(
+                WS_URL, ping_interval=25, ping_timeout=15
+            ) as ws:
+                print("실서버 연결 성공", flush=True)
 
-        await ws.send(json.dumps(sub_msg))
-        print(f"구독 요청 전송 완료: {symbol}")
+                # 구독 요청
+                for symbol in symbols:
+                    msg = {
+                        "header": {
+                            "approval_key": approval_key,
+                            "custtype": "P",
+                            "tr_type": "1",
+                            "content-type": "utf-8",
+                        },
+                        "body": {"input": {"tr_id": "H0STCNT0", "tr_key": symbol}},
+                    }
+                    await ws.send(json.dumps(msg))
+                    print(f"📤 [{symbol}] 구독 요청 전송 완료", flush=True)
+                    await asyncio.sleep(0.25)
 
-        while True:
-            raw = await ws.recv()
-            if raw.startswith("{"):
-                continue
+                print("모든 종목 구독 완료 — tick 대기 중...", flush=True)
 
-            try:
-                _, _, _, payload = raw.split("|", 3)
-                fields = payload.split("^")
+                # 수신 루프
+                while True:
+                    raw = await ws.recv()
 
-                tick_time = fields[1]
-                price = safe_float(fields[2])
-                change_rate = safe_float(fields[5])
-                volume = safe_int(fields[12])
-                cumulative_volume = safe_int(fields[13])
-                cumulative_value = safe_int(fields[14])
-                tick_strength = safe_float(fields[15])
+                    if raw.startswith("{"):
+                        print(f"서버 응답: {raw}", flush=True)
+                        continue
 
-                summary = {
-                    "symbol": symbol,
-                    "tick_time": tick_time,
-                    "price": price,
-                    "change_rate": change_rate,
-                    "volume": volume,
-                    "cumulative_volume": cumulative_volume,
-                    "cumulative_value": cumulative_value,
-                    "tick_strength": tick_strength,
-                }
+                    try:
+                        _, tr_id, tr_key, payload = raw.split("|", 3)
+                        if tr_id != "H0STCNT0":
+                            continue
 
-                redis_client.set(f"market:{symbol}:tick", json.dumps(summary))
+                        fields = payload.split("^")
+                        symbol = fields[0]
+                        tick_time = fields[1]
+                        price = float(fields[2])
+                        cumulative_volume = int(fields[8]) if fields[8] else 0
+                        cumulative_value = int(fields[9]) if fields[9] else 0
+                        tick_strength = float(fields[13]) if fields[13] else None
+                        change_rate = float(fields[5]) if fields[5] else None
+                        volume = int(fields[8]) if fields[8] else 0
 
-                # 인자 전체 전달
-                on_tick(
-                    symbol,
-                    price,
-                    volume,
-                    tick_time,
-                    cumulative_volume=cumulative_volume,
-                    cumulative_value=cumulative_value,
-                    tick_strength=tick_strength,
-                    change_rate=change_rate,
-                )
+                        print(
+                            f"📊 [{symbol}] {tick_time} | 가격={price:,.0f} | 체결강도={tick_strength} | 등락률={change_rate}",
+                            flush=True,
+                        )
 
-                print(
-                    f"{symbol} {tick_time} | "
-                    f"현재가={price:,.0f} | "
-                    f"등락={change_rate:.2f}% | "
-                    f"체결강도={tick_strength:.2f}"
-                )
+                        on_tick(
+                            symbol=symbol,
+                            price=price,
+                            volume=volume,
+                            tick_time=tick_time,
+                            cumulative_volume=cumulative_volume,
+                            cumulative_value=cumulative_value,
+                            tick_strength=tick_strength,
+                            change_rate=change_rate,
+                        )
 
-            except Exception as e:
-                print("[PARSE ERROR]", e)
+                    except Exception as e:
+                        print(f"[PARSE ERROR] {e} / raw={raw[:120]!r}", flush=True)
+
+        except Exception as e:
+            print(f"WebSocket 연결 끊김 ({e}) → 5초 후 재시도", flush=True)
+            await asyncio.sleep(5)
