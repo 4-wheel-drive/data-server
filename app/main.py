@@ -29,4 +29,3 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="market module", lifespan=lifespan)
-# app = FastAPI(title="market module")
