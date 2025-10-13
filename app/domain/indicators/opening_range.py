@@ -63,8 +63,8 @@ def compute_all_timeframe_opening_range(highs, lows, closes, symbol=None):
     if not highs or not lows or not closes:
         return results
     
-    timeframes = ["1m_", "5m_", "15m_", "1h_", "4h_", "1d_"]
-    periods = [5, 10, 15, 30]
+    timeframes = ["1m_"]
+    periods = [15]
     
     for timeframe in timeframes:
         tf_key = timeframe.rstrip('_')
