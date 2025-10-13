@@ -1,46 +1,44 @@
 import pandas as pd
-import numpy as np
-
+from app.domain.indicators.redis_helper import get_indicator_from_redis
 
 def compute_vwap(prices, volumes):
-    """단일 VWAP 계산"""
+    if not prices or not volumes or len(prices) == 0 or len(volumes) == 0:
+        return None
+    
     s_prices = pd.Series(prices)
     s_volumes = pd.Series(volumes)
-    vwap = (s_prices * s_volumes).cumsum() / s_volumes.cumsum()
+    
+    if s_volumes.sum() == 0:
+        return None
+    
+    vwap = (s_prices * s_volumes).sum() / s_volumes.sum()
     return vwap
 
-
-def compute_all_timeframe_vwap(prices, volumes):
-    """
-    모든 타임프레임별 VWAP 계산
-    [1m, 5m, 15m, 1h, 4h, 1d]
-    """
+def compute_all_timeframe_vwap(prices, volumes, symbol=None):
     results = {}
-    timeframes = {
-        "1m_": 1,
-        "5m_": 5,
-        "15m_": 15,
-        "1h_": 60,
-        "4h_": 240,
-        "1d_": 390,  # 한국시장 기준 (9시~15시30분)
-    }
-
-    s_prices = pd.Series(prices)
-    s_volumes = pd.Series(volumes)
-
-    for prefix, window in timeframes.items():
-        if len(s_prices) >= window:
-            sub_prices = s_prices[-window:]
-            sub_volumes = s_volumes[-window:]
-            vwap = (sub_prices * sub_volumes).sum() / sub_volumes.sum()
-            results[f"{prefix}vwap"] = vwap
-
+    
+    if not prices or not volumes:
+        return results
+    
+    timeframes = ["1m_", "5m_", "15m_", "1h_", "4h_", "1d_"]
+    
+    for timeframe in timeframes:
+        tf_key = timeframe.rstrip('_')
+        
+        vwap_value = compute_vwap(prices, volumes)
+        
+        if vwap_value is not None:
+            results[f"{timeframe}vwap"] = vwap_value
+        elif symbol:
+            cached_vwap = get_indicator_from_redis(symbol, tf_key, "vwap")
+            if cached_vwap is not None:
+                results[f"{timeframe}vwap"] = cached_vwap
+    
     return results
 
-
 def compute_mono_timeframe_vwap(closes, volumes):
-    """VWAP 계산"""
-    if np.sum(volumes) == 0:
+    if not closes or not volumes or sum(volumes) == 0:
         return {}
-    closes, volumes = np.array(closes), np.array(volumes)
-    return {"vwap": float(np.sum(closes * volumes) / np.sum(volumes))}
+    
+    vwap = sum(c * v for c, v in zip(closes, volumes)) / sum(volumes)
+    return {"vwap": float(vwap)}
