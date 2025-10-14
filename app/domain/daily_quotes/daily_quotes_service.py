@@ -125,12 +125,6 @@ def issue_new_access_token() -> str | None:
 def get_52week_high_low(symbol: str) -> dict:
     """
     한투 API에서 52주 고가/저가 조회
-    
-    Args:
-        symbol: 종목코드
-    
-    Returns:
-        dict: {"week52_high": 96000, "week52_low": 49900, "week52_range": 46100}
     """
     url = f"{KIS_REST_API_URL}/uapi/domestic-stock/v1/quotations/inquire-price"
     
