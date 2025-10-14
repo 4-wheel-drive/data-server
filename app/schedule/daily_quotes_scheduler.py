@@ -102,8 +102,8 @@ def collect_daily_quotes():
                 success_count += 1
                 print(f"✅ {symbol} ({symbol_name}): {data.get('count', 0)}일 데이터 수집 완료")
                 
-                # 보조지표 계산
-                indicators = calculate_technical_indicators(data['data'])
+                # 보조지표 계산 (Redis 저장 포함)
+                indicators = calculate_technical_indicators(data['data'], symbol=symbol)
                 
                 if indicators:
                     print(f"📊 {symbol} 보조지표:")
