@@ -2,6 +2,7 @@ import httpx
 import os
 import pandas as pd
 import time
+import json
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
@@ -234,11 +235,19 @@ def calculate_technical_indicators(quotes_data, symbol=None):
         # Redis 저장
         if symbol and indicators:
             indicator_key = f"I:{symbol}:1d"
+            
+            # 날짜 정보 추가
+            latest_date = df["date"].iloc[-1].strftime("%Y-%m-%d")
+            
             # None 값 제거
-            clean_indicators = {k: str(v) for k, v in indicators.items() if v is not None}
+            clean_indicators = {k: v for k, v in indicators.items() if v is not None}
+            clean_indicators["t"] = latest_date
+            
             if clean_indicators:
-                redis_client.hset(indicator_key, mapping=clean_indicators)
-                print(f"✅ Redis 저장: {indicator_key} ({len(clean_indicators)}개 지표)")
+                # List에 추가 (최대 30개 유지)
+                redis_client.rpush(indicator_key, json.dumps(clean_indicators))
+                redis_client.ltrim(indicator_key, -30, -1)
+                print(f"✅ Redis 저장: {indicator_key} ({len(clean_indicators)-1}개 지표, 날짜: {latest_date})")
 
         return indicators
     except Exception as e:
