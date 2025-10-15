@@ -13,6 +13,7 @@ conf = {
 }
 
 topics = [
+    "candles.005930.tick",
     "candles.005930.1m",
     "candles.005930.5m",
     "candles.005930.15m",
@@ -33,12 +34,12 @@ try:
             code = msg.error().code()
             if code in (KafkaError._PARTITION_EOF, KafkaError.UNKNOWN_TOPIC_OR_PART):
                 # 토픽이 아직 안 만들어졌으면 기다림
-                print(f"⚠️ Topic not ready yet: {msg.topic()}")
+                print(f"[Topic not ready yet] {msg.topic()}")
                 continue
             raise KafkaException(msg.error())
 
         data = msg.value().decode("utf-8")
-        print(f"[{msg.topic()}] ✅ {data}")
+        print(f"[{msg.topic()}] {data}")
 
 except KeyboardInterrupt:
     print("Stopping consumer...")

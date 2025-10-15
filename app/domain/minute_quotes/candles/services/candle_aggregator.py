@@ -1,7 +1,9 @@
 from datetime import datetime
 from collections import defaultdict
 from app.domain.minute_quotes.candles.services.candle_storage import push_candle
-from app.domain.minute_quotes.candles.services.indicator_calculator import calculate_and_save_indicators
+from app.domain.minute_quotes.candles.services.indicator_calculator import (
+    calculate_and_save_indicators,
+)
 from app.infra.kafka_producer import producer, delivery_report
 import json
 
@@ -17,7 +19,7 @@ def parse_time_flexible(t_str: str):
             return datetime.fromisoformat(t_str)
         return datetime.strptime(t_str, "%Y%m%d%H%M")
     except Exception as e:
-        print(f"⚠️ [TIME PARSE ERROR] {e} / t={t_str}", flush=True)
+        print(f"[TIME PARSE ERROR] {e} / t={t_str}", flush=True)
         return None
 
 
