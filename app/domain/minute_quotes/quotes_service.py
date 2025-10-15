@@ -143,11 +143,11 @@ async def get_symbols(limit=20):
 async def stop_quotes():
     global running_task
     if running_task:
-        print("📴 WebSocket 종료 요청 수신", flush=True)
+        print("｢WebSocket 종료 요청 수신｣", flush=True)
         running_task.cancel()
         try:
             await running_task
         except asyncio.CancelledError:
             pass
         running_task = None
-        print("✅ WebSocket 정상 종료", flush=True)
+        print("｢WebSocket 정상 종료｣", flush=True)
