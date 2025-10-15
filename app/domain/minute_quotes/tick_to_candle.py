@@ -4,6 +4,7 @@ from app.domain.minute_quotes.candles.services.candle_storage import push_candle
 from app.domain.minute_quotes.candles.services.candle_aggregator import (
     aggregate_to_higher_timeframes,
 )
+from app.domain.minute_quotes.candles.services.indicator_calculator import calculate_and_save_indicators
 from app.infra.kafka_producer import producer, delivery_report
 import json
 
@@ -86,5 +87,11 @@ def on_tick(
         )
         producer.poll(0)
         print(f"[Kafka →] {candle_topic}: {candle}")
+
+        # 1분봉 지표 계산
+        try:
+            calculate_and_save_indicators(symbol, "1m")
+        except Exception as e:
+            print(f"⚠️  1분봉 지표 계산 에러 [{symbol}]: {e}")
 
         aggregate_to_higher_timeframes(symbol, candle)

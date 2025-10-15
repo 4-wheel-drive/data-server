@@ -1,6 +1,9 @@
 from datetime import datetime
 from collections import defaultdict
 from app.domain.minute_quotes.candles.services.candle_storage import push_candle
+from app.domain.minute_quotes.candles.services.indicator_calculator import (
+    calculate_and_save_indicators,
+)
 from app.infra.kafka_producer import producer, delivery_report
 import json
 
@@ -16,7 +19,7 @@ def parse_time_flexible(t_str: str):
             return datetime.fromisoformat(t_str)
         return datetime.strptime(t_str, "%Y%m%d%H%M")
     except Exception as e:
-        print(f"⚠️ [TIME PARSE ERROR] {e} / t={t_str}", flush=True)
+        print(f"[TIME PARSE ERROR] {e} / t={t_str}", flush=True)
         return None
 
 
@@ -76,5 +79,11 @@ def aggregate_to_higher_timeframes(symbol: str, candle_1m: dict):
             )
             producer.poll(0)
             print(f"[Kafka →] {topic}: {agg}", flush=True)
+
+            # 지표 계산 (봉 완성 시)
+            try:
+                calculate_and_save_indicators(symbol, tf)
+            except Exception as e:
+                print(f"⚠️  지표 계산 에러 [{symbol}:{tf}]: {e}", flush=True)
 
             aggregate_cache[cache_key].clear()
