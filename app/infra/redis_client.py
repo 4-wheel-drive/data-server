@@ -1,14 +1,19 @@
 import redis
 import os
+from dotenv import load_dotenv
 
-REDIS_HOST = os.getenv("REDIS_HOST", "43.202.233.161")
-REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
-REDIS_DB = int(os.getenv("REDIS_DB", 0))
+load_dotenv()
+
+REDIS_HOST = os.getenv("REDIS_HOST")
+REDIS_PORT = int(os.getenv("REDIS_PORT"))
+REDIS_PASSWORD = os.getenv("REDIS_PASSWORD")
+
+password = REDIS_PASSWORD if REDIS_PASSWORD else None
 
 pool = redis.ConnectionPool(
     host=REDIS_HOST,
     port=REDIS_PORT,
-    db=REDIS_DB,
+    password=password,
     decode_responses=True,
     max_connections=10,
 )
