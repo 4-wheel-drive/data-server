@@ -4,7 +4,9 @@ from app.domain.minute_quotes.candles.services.candle_storage import push_candle
 from app.domain.minute_quotes.candles.services.candle_aggregator import (
     aggregate_to_higher_timeframes,
 )
-from app.domain.minute_quotes.candles.services.indicator_calculator import calculate_and_save_indicators
+from app.domain.minute_quotes.candles.services.indicator_calculator import (
+    calculate_and_save_indicators,
+)
 from app.infra.kafka_producer import producer, delivery_report
 import json
 
@@ -70,7 +72,7 @@ def on_tick(
         c["cumulative_value"] = cumulative_value
         c["change_rate"] = change_rate
 
-    # ✅ 지난 분 봉 완료 시 Redis push + Kafka 발행
+    # 지난 분 봉 완료 시 Redis push + Kafka 발행
     finished_keys = [
         k for k in candle_buffer.keys() if k[0] == symbol and k[1] < minute
     ]
@@ -92,6 +94,6 @@ def on_tick(
         try:
             calculate_and_save_indicators(symbol, "1m")
         except Exception as e:
-            print(f"⚠️  1분봉 지표 계산 에러 [{symbol}]: {e}")
+            print(f"1분봉 지표 계산 에러 [{symbol}]: {e}")
 
         aggregate_to_higher_timeframes(symbol, candle)
