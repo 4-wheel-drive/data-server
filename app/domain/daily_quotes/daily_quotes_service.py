@@ -75,7 +75,7 @@ def get_access_token() -> str | None:
     """Redis에서 Access Token 조회 (한투 REST API용)"""
     try:
         # data-server 전용 한투 API token
-        token = redis_client.get("kis:data-server:access-token")
+        token = redis_client.get("kis:user:1:access-token")
         
         if not token:
             # 없으면 직접 발급

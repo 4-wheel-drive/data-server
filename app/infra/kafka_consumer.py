@@ -7,7 +7,7 @@ import json
 
 # Kafka Consumer 설정
 conf = {
-    "bootstrap.servers": "localhost:19092",  # compose 설정과 일치
+    "bootstrap.servers": "my-cluster-kafka-bootstrap.kafka:9092",  # compose 설정과 일치
     "group.id": "market-consumer-group",
     "auto.offset.reset": "latest",
 }

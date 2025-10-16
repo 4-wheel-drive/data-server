@@ -4,7 +4,7 @@ import socket
 
 # Kafka Producer 설정
 producer_config = {
-    "bootstrap.servers": "localhost:19092",  # docker-compose.yml과 일치
+    "bootstrap.servers": "my-cluster-kafka-bootstrap.kafka:9092",  # docker-compose.yml과 일치
     "client.id": socket.gethostname(),
     "linger.ms": 5,  # 배치 전송 지연 (ms)
     "acks": "1",  # 리더 브로커 확인만 대기 (속도 ↑, 안정성 중간)
