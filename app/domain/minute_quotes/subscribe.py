@@ -4,7 +4,7 @@ import json
 from app.infra.redis_client import redis_client
 from app.domain.minute_quotes.tick_to_candle import on_tick
 
-WS_URL = "ws://ops.koreainvestment.com:21000"  # 실서버
+WS_URL = "ws://ops.koreainvestment.com:21000"
 
 
 async def start_multi_subscribe(symbols):
@@ -33,7 +33,7 @@ async def start_multi_subscribe(symbols):
                         "body": {"input": {"tr_id": "H0STCNT0", "tr_key": symbol}},
                     }
                     await ws.send(json.dumps(msg))
-                    print(f"📤 [{symbol}] 구독 요청 전송 완료", flush=True)
+                    print(f"[{symbol}] 구독 요청 전송 완료", flush=True)
                     await asyncio.sleep(0.25)
 
                 print("모든 종목 구독 완료 — tick 대기 중...", flush=True)
@@ -62,7 +62,7 @@ async def start_multi_subscribe(symbols):
                         volume = int(fields[8]) if fields[8] else 0
 
                         print(
-                            f"📊 [{symbol}] {tick_time} | 가격={price:,.0f} | 체결강도={tick_strength} | 등락률={change_rate}",
+                            f"[{symbol}] {tick_time} | 가격={price:,.0f} | 체결강도={tick_strength} | 등락률={change_rate}",
                             flush=True,
                         )
 

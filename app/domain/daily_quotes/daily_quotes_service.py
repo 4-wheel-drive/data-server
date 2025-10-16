@@ -20,7 +20,7 @@ load_dotenv()
 APP_KEY = os.getenv("APP_KEY")
 APP_SECRET = os.getenv("APP_SECRET")
 KIS_REST_API_URL = os.getenv(
-    "KIS_REST_API_URL", "https://openapivts.koreainvestment.com:29443"
+    "KIS_REST_API_URL", "https://openapi.koreainvestment.com:9443"
 )
 
 
@@ -75,7 +75,7 @@ def get_access_token() -> str | None:
     """Redis에서 Access Token 조회 (한투 REST API용)"""
     try:
         # data-server 전용 한투 API token
-        token = redis_client.get("kis:user:1:access-token")
+        token = redis_client.get("kis:admin:access-token")
 
         if not token:
             # 없으면 직접 발급
@@ -94,7 +94,7 @@ def get_access_token() -> str | None:
 
 def issue_new_access_token() -> str | None:
     """한투 API에서 직접 Access Token 발급"""
-    url = "https://openapivts.koreainvestment.com:29443/oauth2/tokenP"
+    url = "https://openapi.koreainvestment.com:9443/oauth2/tokenP"
 
     try:
         with httpx.Client(timeout=10.0) as client:
@@ -114,7 +114,7 @@ def issue_new_access_token() -> str | None:
 
                 # Redis에 저장 (TTL 설정)
                 redis_client.setex(
-                    "kis:data-server:access-token", expires_in - 60, access_token
+                    "kis:admin:access-token", expires_in - 60, access_token
                 )
                 print(f"✅ 새 Access Token 발급 성공 (유효기간: {expires_in}초)")
 
