@@ -53,7 +53,7 @@ DAYS_TO_FETCH = 200
 # Token 관리
 # -----------------------------
 def get_token():
-    token = redis_client.get("kis:user:1:access-token")
+    token = redis_client.get("kis:admin:access-token")
     if token:
         return token
     res = requests.post(
@@ -68,7 +68,7 @@ def get_token():
     res.raise_for_status()
     data = res.json()
     token = data.get("access_token")
-    redis_client.setex("kis:user:1:access-token", ACCESS_TOKEN_TTL, token)
+    redis_client.setex("kis:admin:access-token", ACCESS_TOKEN_TTL, token)
     return token
 
 
